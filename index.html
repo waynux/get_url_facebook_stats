@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+  html, body {
+    width: 1280px;
+    height: 720px;
+    margin: 0 auto;
+    font-family: Helvetica, Sans-Serif;
+  }
+
+  p {
+    margin-left: 20px;
+  }
+
+  #panel {
+    top: 20%;
+    left: 0;
+    right: 0;
+    width: 900px;
+    margin: 0 auto;
+  }
+
+  #post-url {
+    width: 620px;
+    height: 20px;
+    font-size: 13px;
+    padding-left: 5px;
+  }
+
+  .item {
+    width: 160px;
+    display: inline-block;
+    margin-right: 20px;
+  }
+
+  table {
+    font-family: "Lato","sans-serif";
+  }
+
+  table caption {
+    padding-bottom: 1em;
+  }
+
+  table.two {
+    margin-bottom: 3em;
+    border-collapse:collapse;
+    display: inline-block;
+    margin-right: 3em;
+  }
+
+  table.two td {
+    width: 10em;
+    border: 0.1em #c2c2c2 solid;
+    padding: 1em;
+  }
+
+  table.two th {
+    padding: 1em;
+    background-color: black;
+    color: white;
+    text-align: left;
+  }
+
+  table.two tr {
+    height: 1em;
+  }
+  </style>
+</head>
+<body>
+  <div id="panel">
+    <p>
+      <span class="item">
+        ENTER URL
+      </span>
+      <input type="url" id="post-url" placeholder="Enter the URL of the article to be get like count from">
+    </p>
+    <table class="two">
+      <tr>
+        <th>Like</th>
+        <th>Comment</th>
+        <th>Shared</th>
+      </tr>
+      <tr>
+        <td id="likes-count"></td>
+        <td id="comments-count"></td>
+        <td id="share-count"></td>
+      </tr>
+    </table>
+    <p id="status"></p>
+  </div>
+<script charset="UTF-8">
+document.addEventListener("DOMContentLoaded", () => {
+  const getJSON = (url, callback) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('get', url, true);
+    xhr.responseType = 'json';
+    xhr.onload = () => xhr.status === 200 ? callback(null, xhr.response) : callback(status);
+    xhr.send();
+  };
+
+  const statusSection = document.getElementById('status');
+  const likesCountSection = document.getElementById('likes-count');
+  const commentsCountSection = document.getElementById('comments-count');
+  const shareCountSection = document.getElementById('share-count');
+
+  document.getElementById("post-url").addEventListener('focusout', function(){
+    const url = decodeURI(this.value);
+    statusSection.innerHTML = 'Loading...';
+
+    if (url) {
+      getJSON(`
+        https://graph.facebook.com/?
+        fields=og_object{likes.limit(0).summary(1), comments.summary(1)},share&ids=${url}
+      `, function(error, response){
+        if (error === null) {
+          const og_object = response[url]['og_object'];
+          if (og_object) {
+            likesCountSection.innerHTML = og_object['likes']['summary']['total_count'];
+            commentsCountSection.innerHTML = og_object['comments']['summary']['total_count'];
+            shareCountSection.innerHTML = response[url]['share']['share_count'];
+          }
+          statusSection.innerHTML = '';
+        } else {
+          statusSection.innerHTML = 'Example url: https://www.thenewslens.com/article/52083';
+        }
+      })
+    }
+  });
+});
+</script>
+</body>
+</html>
